@@ -1,0 +1,147 @@
+---
+title: "AS01_R-Basic-Intermediate"
+author: "你是誰 R10342000 新聞所碩五"
+date: "2022/03/03"
+output:
+  html_document:
+    number_sections: no
+    theme: united
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+    toc_float:
+      collapsed: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = 'hold', comment = '#>', error = TRUE)
+```
+
+## 作業目的:   
+
+這份作業希望能夠讓你熟悉    
+- R data structure    
+- conditioning and loop    
+
+打好地基之後蓋房子才穩，祝你寫作業愉快！
+
+### vector
+
+(1) 有一個 vector 叫做 `value`，內容是從 51 到 100 之間的正整數，請利用`[]`從中取出質數，但不能用偷懶寫法直接取值 `value[51,...]`
+
+```{r warning=FALSE}
+# (1)
+value <- c(51:100)
+
+### result should be
+#>  [1] 53 59 61 67 71 73 79 83 89 97
+```
+
+(2) 請利用兩種**不同的**方法，將`vector_02`變成`c(2,3,5)`，並將結果分別存到 `vector_03` 和 `vector_04` 裡面。但不能直接使用 assignment 的偷懶寫法 `vector_03 <- c(2,3,5)`
+
+```{r warning=FALSE}
+# (2)
+vector_02 <- c(1,3,5)
+### your code
+# method01
+
+# method02
+
+```
+
+### list
+
+下方列出部分新聞所本學期開設課程，請協助
+
+(1) 抓出教師姓氏   
+(2) 計算學生人數平均   
+(3) 修改`student_quota`元素，將修課限制人數**加倍**，並將結果印出，造成老師困擾   
+(4) 在 list 中插入新元素 `weekday`，內容為 `c("三","三","五","三")`，並將`weekday`印出
+
+```{r}
+list_journalism <-
+  list(teacher=c("chen","hung","liang","lee"),
+       course=c("新聞寫作","全球化與傳播","採訪寫作二","新聞編輯與資訊設計"),
+       student_quota=c(20,15,9,20),
+       dept="journalism")
+
+### your code
+# (1)
+
+### result should be
+#> [1] "chen"  "hung"  "liang" "lee" 
+# (2)
+
+### result should be
+#> [1] 16
+# (3)
+
+### result should be
+#> [1] 40 30 18 40
+# (4) 
+
+### result should be
+#> [1] "三" "三" "五" "三"
+```
+
+### dataframe
+
+下方提供 The Economist 所開放的[大麥克指數](https://github.com/TheEconomist/big-mac-data/blob/master/source-data/big-mac-source-data.csv)原始資料，已經先篩選出 2021 年的資料。
+
+(1) 請篩選出台灣的資料並印出 dataframe   
+(2) 請印出 GDP dollar 的次大值(second largest)   
+(3) 請找出哪個國家的 GSP_dollar 為 `3706.765`   
+(4) 請找出 local_price 曾經 < 2 的所有國家
+
+
+```{r}
+df_mac <- read.csv("data/AS01/df_mac_2021.csv")
+
+### your code
+# (1)
+
+### result should be
+#>       name local_price GDP_dollar
+#> 67  Taiwan          72   25873.37
+#> 139 Taiwan          72   28305.92
+# (2)
+
+### result should be
+#> [1] 83849.81
+# (3)
+
+### result should be
+#>       name local_price GDP_dollar
+#> 68 Ukraine          62   3706.765
+# (4)
+
+### result should be
+#> [1] "Bahrain" "Kuwait"  "Oman"
+```
+
+### for loop & conditional statement
+
+有位同學小軒非常偏食，請依照小軒的飲食禁忌，利用迴圈與條件判斷，印出小軒是否會吃某家餐廳    
+- 小軒吃：林師傅、馬祖麵館、大李水餃、李記水餃、Barkers美式餐廳    
+- 小軒不吃：五九麵館、親來食堂、憶馬當鮮、穰穰、師大第一腿    
+
+```{r message=FALSE, warning=FALSE}
+### your code
+vector_shop <- c("Barkers美式餐廳", "親來食堂", "李記水餃", "憶馬當鮮", "穰穰",
+                 "五九麵館", "大李水餃", "林師傅", "馬祖麵館", "師大第一腿")
+
+
+### result should be
+# [1] "小軒吃Barkers美式餐廳"
+# [1] "小軒不吃親來食堂"
+# [1] "小軒吃李記水餃"
+# [1] "小軒不吃憶馬當鮮"
+# [1] "小軒不吃穰穰"
+# [1] "小軒不吃五九麵館"
+# [1] "小軒吃大李水餃"
+# [1] "小軒吃林師傅"
+# [1] "小軒吃馬祖麵館"
+# [1] "小軒不吃師大第一腿"
+```
+
+
