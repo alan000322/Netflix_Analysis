@@ -1,5 +1,5 @@
 ---
-title: "Netflix"
+title: "Netflix_add_zh_name"
 author: "快樂RRRRR"
 date: "2022/05/19"
 output:
@@ -26,10 +26,12 @@ library(rvest) #read_html html_nodes(), html_text()
 
 ### Param & Var
 Netflix_df <- read_csv("concatALL.csv") # 讀取檔案
+Netflix_df <- read_csv("concatALL_more.csv") # 讀取檔案
 Res <- tibble()
 netflix_en_id <- Netflix_df$id %>% unique # 確認戲劇是唯一的
+Netflix_df %>% View
 #count = 0
-
+netflix_en_id %>% length
 ### Main Program
 for (i in c(1:length(netflix_en_id))) { # 建議多加 try catch 避免 http error
   movie_id = netflix_en_id[i]
@@ -45,8 +47,17 @@ for (i in c(1:length(netflix_en_id))) { # 建議多加 try catch 避免 http err
 }
 Res <- Res %>% mutate( id = movie_id ) %>% select(id, movie_zh_name)
 Netflix_df_zh <- Netflix_df %>% left_join(Res)
-Netflix_df_zh %>% write_csv("Netflix_df_zh-name.csv")
+Netflix_df_zh %>% 
+  select(Year, Week, Ranking, name, movie_zh_name, everything()) %>%
+  write_csv("Netflix_df_zh-name_more.csv")
 
 # 87,101(?)可能有問題
 # 有些跑NA看我們能不能手動補，抓資料的時候不知道有少數三四個會跑error，就有一些資訊斷掉QQQQ
 ```
+```{r}
+Netflix_df_zh_all <- read_csv("Netflix_df_zh-name_v0528.csv")
+t %>% tail
+t %>% mutate(tag = str_c(Year, "-",  Week, "-", Ranking)) %>%
+  select(tag, everything()) 
+```
+
