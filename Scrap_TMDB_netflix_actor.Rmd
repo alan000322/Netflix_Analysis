@@ -55,24 +55,63 @@ Netflix_KR_Actor_df <- Netflix_df %>% filter( origin_country == "KR") %>% left_j
 Netflix_KR_Director_df <- Netflix_df %>% filter( origin_country == "KR") %>% left_join(Director_List) %>% select(Year, Week, Ranking, TV, movie_zh_name, id, category, director, imdb_score )
 
 
-write_csv(Netflix_KR_Actor_df, "Netflix_KR_Actor_df.csv")
+
+```
+
+## 導演還需手動調整NA
+```{r}
+Netflix_KR_Director_df %>%
+  select(id, Week, Ranking, movie_zh_name,director) %>%
+  count(director) %>%
+  arrange(desc(n))
+
+## NA 有點多 - 手動調整值
+#Test <- Netflix_KR_Director_df %>% mutate(num = row_number()) %>%select(num, movie_zh_name, director)
+#Test %>% filter(movie_zh_name == "謎霧")%>% select(num) %>% as.character() # 看到底缺的NA在哪個row
+
+Netflix_KR_Director_df[ c(14, 19, 30),	 ]$director = "Hong Won Ki" #韓國都市怪談
+Netflix_KR_Director_df[ c(63,98),        ]$director = "Kim Min-kyeong" #Do Do Sol Sol La La Sol
+Netflix_KR_Director_df[ c(71, 74, 83, 87, 91, 93, 97, 100, 103),       ]$director = "Nam Gun" #私生活
+Netflix_KR_Director_df[ c(102, 105, 106, 111, 114, 116, 120, 124, 128, 130, 132, 136, 143, 148),       ]$director = "Yoo Seon-dong"#驅魔麵館Park Bong-seop
+Netflix_KR_Director_df[ c(108, 109, 113, 118, 121, 125),       ]$director = "Lee Eung Bok"#甜蜜家園
+Netflix_KR_Director_df[ c(117, 123, 126, 129, 131, 133, 139),  ]$director = "Lee Jae-hoon"#奔向愛情
+Netflix_KR_Director_df[ c(138, 142, 146, 151, 155, 161, 165, 169, 174, 175, 178, 187, 197),       ]$director = "Jin Hyuk"#薛西弗斯的神話
+Netflix_KR_Director_df[ c(194, 200),     ]$director = "Choi Do-hoon"#附身
+Netflix_KR_Director_df[ c(251, 264, 272, 280, 285, 296, 303, 309),       ]$director = "Jo Young Gwang"#羽球少年團
+Netflix_KR_Director_df[ c(291, 302, 308, 314, 324),   ]$director = "Park Joon-hwa"#金秘書為何那樣
+Netflix_KR_Director_df[ c(325, 333),                  ]$director = "Jo Soo Won"#天才醫生車耀漢
+Netflix_KR_Director_df[ c(393, 400, 406, 412, 425),   ]$director = "Lee Jung-Heum"#神探具景伊
+Netflix_KR_Director_df[ 395,                          ]$director = "Choi Sung-Bum"#我的ID是江南美人
+Netflix_KR_Director_df[ c(397, 404, 411),             ]$director = "Mo Wan Il"#謎霧
+
+
+Netflix_KR_Director_df
+
+```
+
+# 調整兩個df韓文的英文字
+```{r}
+Netflix_KR_Director_df$director <- Netflix_KR_Director_df$director %>% str_replace_all("\\W+", " ") %>% str_to_lower()
+Netflix_KR_Actor_df$actor <- Netflix_KR_Actor_df$actor %>% str_replace_all("\\W+", " ") %>% str_to_lower()
+
 write_csv(Netflix_KR_Director_df, "Netflix_KR_Director_df.csv")
+write_csv(Netflix_KR_Actor_df, "Netflix_KR_Actor_df.csv")
 ```
 
 
-## 演員評比
+
+## 演員/導演評比
 ```{r}
 Netflix_KR_Actor_df %>%
   select(Year, Week, Ranking, actor) %>%
   count(actor) %>%
   arrange(desc(n))
-```
 
-## 導演評比
-```{r}
 Netflix_KR_Director_df %>%
-  select(id, Week, Ranking, movie_zh_name,director)
+  select(Year, Week, Ranking, director) %>%
   count(director) %>%
   arrange(desc(n))
+
 ```
+
 
