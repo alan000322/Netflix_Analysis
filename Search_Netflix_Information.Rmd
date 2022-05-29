@@ -1,0 +1,150 @@
+---
+title: "Search_Netflix_Information"
+author: "快樂RRRRR"
+output: html_document
+date: '2022-04-15'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+options(scipen = 999)
+#install.packages("jsonlite")
+library(jsonlite)
+```
+
+# read_csv_tvname
+```{r}
+#tvname <- read_csv("Ranking_Netflix_TW.csv")
+tvname_more <- read_csv("Ranking_Netflix_TW_more.csv")
+```
+# parse json to tibble
+```{r}
+#testing one url：business_proposal
+#url <- jsonlite::fromJSON("https://api.themoviedb.org/3/search/tv?api_key=97d7f30f1de5db069152465598a072f1&query=Business+Proposal")
+#bp <- flatten(as.data.frame(url)) 
+#bp$results.id          #得到tv_id
+#looping all url from csv list
+name <- str_replace_all(tvname_more$TV, " ", "+") # 改成搜尋格式（不能用空格）
+name <- unique(name) # 去重複
+#write_csv(tvname, 'Ranking_Netflix_TW_modified.csv')
+#length(tvname$TV)
+#length(name)
+```
+
+```{r}
+df_TVResult <- tibble()
+c = 1 # 設定計時，每跑四筆就讓程式睡一下
+count = 1
+len = length(name)
+for (val in name) {
+  url <- paste( # 把網址串起來
+    "https://api.themoviedb.org/3/search/tv?api_key=97d7f30f1de5db069152465598a072f1&query=", 
+    val,
+    sep=""
+  )
+  df_tmp <- fromJSON(url) %>% as_tibble()
+  df_TVResult <- bind_rows(df_TVResult, df_tmp$results) 
+  if (c == 5) { # 睡覺機制
+    c = 1
+    Sys.sleep( sample(c(1:20))[1] )
+    print(sample(c(1:15))[1])
+  }
+  c = c + 1
+  print(
+    paste('Finished...', count, "...   ",round(100*count/len, 2), "%" ) # 進度條
+  )
+  count = count + 1
+  Sys.sleep(10)
+}
+```
+```{r}
+write_csv(df_TVResult, 'df_TVResult_more.csv')
+```
+
+
+```{r}
+tvname_more <- tvname_more %>%
+  separate( `Year-Week-rank`, into=c('Year', 'Week', 'Ranking'), sep='-') %>%
+  as_tibble()
+```
+有一些劇名有一點出錯（標點符號對不上等等的），進行手動處理
+
+```{r}
+setdiff(tvname_more$TV, df_TVResult$name)
+df_TVResult$name %>% length
+tvname_more$TV %>% length
+```
+
+第一次 - 處理NA
+```{r}
+
+tmp <- tibble()
+for ( line in list.files(path="./deal_with_NA/") ) {
+  t <- paste("./deal_with_NA/",line,sep="")
+  print(t)
+  t_df <- read_json(t) %>% as_tibble()
+  tmp <- tmp %>% bind_rows(t_df)
+  
+}
+tmp <- tmp %>% distinct(id, .keep_all = TRUE)
+tvname_mod$TV <- str_replace_all(tvname_mod$TV, 
+                'BOFURI: I Don’t Want to Get Hurt, so I’ll Max Out My Defense.', 
+                'Bofuri: I Don’t Want to Get Hurt, so I’ll Max Out My Defense.' )
+tvname_mod$TV <- str_replace_all(tvname_mod$TV, 
+                'Boss &amp; Me', 
+                'Boss & Me' )
+tvname_mod$TV <- str_replace_all(tvname_mod$TV, 
+                'Love Marriage Divorce', 
+                'Love (ft. Marriage and Divorce)' )
+tvname_mod$TV <- str_replace_all(tvname_mod$TV, 
+                'Love, Death &amp; Robots', 
+                'Love, Death & Robots' )
+tvname_mod$TV <- str_replace_all(tvname_mod$TV, 
+                'Sisyphus: The Myth', 
+                'Sisyphus' )
+
+tvname_mod %>% intersect(tmp, by = c("TV" = "name"))
+
+```
+
+第二次 - 處理(5/28)
+```{r}
+df_more <- tvname_more %>% left_join(df_TVResult) %>% distinct() %>%
+  select(Year, Week, Ranking, name, first_air_date, genre_ids, id, origin_country, original_language, overview, popularity, vote_average, vote_count) %>%
+  mutate( Ranking = as.integer(Ranking) )%>%
+  mutate( origin_country = as.character(origin_country) ) %>%
+  mutate( genre_ids = as.character(genre_ids) ) 
+write.csv(df_more, "concatALL_more.csv", fileEncoding = "UTF-8")
+```
+
+
+重新讀檔案
+```{r}
+tvname_mod <- read_csv("Ranking_Netflix_TW_modified.csv")
+```
+
+
+
+
+```{r}
+df_TVResult <- df_TVResult %>%
+  rename(tv_name = name) 
+tvname_mod <- tvname_mod %>%
+  left_join(df_TVResult, by = c("TV" = "tv_name")) %>%
+  mutate( Ranking = as.integer(Ranking) )%>%
+  mutate( origin_country = as.character(origin_country) ) %>%
+  mutate( genre_ids = as.character(genre_ids) ) %>%
+  unique() %>%
+  select( Year, Week, Ranking, TV, first_air_date, genre_ids, id, origin_country, 
+          original_language, original_name, overview, popularity, vote_average, vote_count )  %>%
+  write.csv("concatALL.csv", fileEncoding = "UTF-8")
+
+
+#%>%
+#  filter( Ranking < 10 ) %>%
+#  group_by( Year, original_language ) %>%
+#  summarize( n=n() )
+
+
+```
