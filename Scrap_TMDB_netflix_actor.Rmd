@@ -1,0 +1,61 @@
+---
+title: "Scrap_TMDB_netflix_actor"
+author: "快樂RRRRR"
+date: "2022/05/29"
+output:
+  html_document:
+    number_sections: no
+    theme: united
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+    toc_float:
+      collapsed: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = 'markup', comment = '#>', error = TRUE)
+```
+
+### 從 TMDB 取得對應的演員、導演
+
+```{r message=FALSE, warning=FALSE}
+### library
+library(tidyverse)
+library(rvest) #read_html html_nodes(), html_text()
+
+### Param & Var
+Netflix_df <- read_csv("Netflix_df_zh-name.v0528.csv") # 讀取檔案
+NetflixKR_id_zhname_df <- Netflix_df %>% select(id, movie_zh_name, origin_country) %>% distinct() %>% drop_na() %>% filter(origin_country == "KR")
+
+length_id <- NetflixKR_id_zhname_df$id%>% length
+Actor_List <- tibble()
+Director_List <- tibble()
+### Main Program
+for (i in c(1:length_id)) { # 建議多加 try catch 避免 error
+  url <- str_c("https://www.themoviedb.org/tv/", NetflixKR_id_zhname_df$id[i], "?language=zh-TW")
+  print(url)
+  print(paste(i, round(100* i / length_id, 3) , "%"))
+  director <- url %>% read_html() %>% html_nodes("#original_header > div.header_poster_wrapper.true > section > div.header_info > ol > li:nth-child(n) > p:nth-child(1) > a") %>% html_text()
+    
+  actor <- url %>% read_html() %>% html_nodes("#cast_scroller > ol > li:nth-child(n) > p:nth-child(2) > a") %>% html_text() 
+  Actor_List <- bind_rows(Actor_List, tibble(NetflixKR_id_zhname_df$id[i], actor))
+  Director_List <- bind_rows(Director_List, tibble(NetflixKR_id_zhname_df$id[i], director))
+  #break
+  random_num <- runif(1, 10, 20) #隨機睡覺取值
+  Sys.sleep(random_num) #睡覺中
+  remove(random_num) #釋放變數
+}
+Actor_List <- Actor_List %>% select(id = `NetflixKR_id_zhname_df$id[i]`, actor)
+Director_List <- Director_List  %>% select(id = `NetflixKR_id_zhname_df$id[i]`, director)
+
+Netflix_KR_Actor_df <- Netflix_df %>% filter( origin_country == "KR") %>% left_join(Actor_List) %>% select(Year, Week, Ranking, TV, movie_zh_name, category, actor, imdb_score )
+
+
+Netflix_KR_Director_df <- Netflix_df %>% filter( origin_country == "KR") %>% left_join(Director_List) %>% select(Year, Week, Ranking, TV, movie_zh_name, category, director, imdb_score )
+
+
+write_csv(Netflix_KR_Actor_df, "Netflix_KR_Actor_df.csv")
+write_csv(Netflix_KR_Director_df, "Netflix_KR_Director_df.csv")
+```
+
