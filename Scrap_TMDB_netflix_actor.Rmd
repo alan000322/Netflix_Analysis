@@ -49,13 +49,30 @@ for (i in c(1:length_id)) { # 建議多加 try catch 避免 error
 Actor_List <- Actor_List %>% select(id = `NetflixKR_id_zhname_df$id[i]`, actor)
 Director_List <- Director_List  %>% select(id = `NetflixKR_id_zhname_df$id[i]`, director)
 
-Netflix_KR_Actor_df <- Netflix_df %>% filter( origin_country == "KR") %>% left_join(Actor_List) %>% select(Year, Week, Ranking, TV, movie_zh_name, category, actor, imdb_score )
+Netflix_KR_Actor_df <- Netflix_df %>% filter( origin_country == "KR") %>% left_join(Actor_List) %>% select(Year, Week, Ranking, TV, movie_zh_name, id, category, actor, imdb_score )
 
 
-Netflix_KR_Director_df <- Netflix_df %>% filter( origin_country == "KR") %>% left_join(Director_List) %>% select(Year, Week, Ranking, TV, movie_zh_name, category, director, imdb_score )
+Netflix_KR_Director_df <- Netflix_df %>% filter( origin_country == "KR") %>% left_join(Director_List) %>% select(Year, Week, Ranking, TV, movie_zh_name, id, category, director, imdb_score )
 
 
 write_csv(Netflix_KR_Actor_df, "Netflix_KR_Actor_df.csv")
 write_csv(Netflix_KR_Director_df, "Netflix_KR_Director_df.csv")
+```
+
+
+## 演員評比
+```{r}
+Netflix_KR_Actor_df %>%
+  select(Year, Week, Ranking, actor) %>%
+  count(actor) %>%
+  arrange(desc(n))
+```
+
+## 導演評比
+```{r}
+Netflix_KR_Director_df %>%
+  select(id, Week, Ranking, movie_zh_name,director)
+  count(director) %>%
+  arrange(desc(n))
 ```
 
