@@ -9,9 +9,7 @@
 報題：
 [期中報題連結](https://docs.google.com/presentation/d/1YSgPmqzaFSmbVI4q67f7RHvS85JjXmjs/edit?usp=sharing&ouid=106392091722319456192&rtpof=true&sd=true)
 
-老師遠距諮詢：[老師遠距諮詢連結]()
-
-期末報告：[期末報告連結]()
+期末報告：[期末報告連結(尚無連結)]()
 
 
 ## 參考資料
@@ -20,3 +18,6 @@
 [Netflix 排行榜揭密：韓劇爆發、日劇起飛，臺劇新出路在哪裡？](https://www.readr.tw/post/2893)
 
 [中國流行語滲透台灣？從 Dcard 數據窺見年輕人網路用語趨勢](https://www.readr.tw/post/2836)
+
+## raw data(spreadsheet)
+https://docs.google.com/spreadsheets/d/1ed2u92zZ1Ex1_hdm8CYUeaiyg6jvBluUq646MuaBfr8/edit?usp=sharing
