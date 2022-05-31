@@ -7,7 +7,7 @@
 ## 報告簡報
 
 報題：
-[期中報題連結](https://docs.google.com/presentation/d/1YSgPmqzaFSmbVI4q67f7RHvS85JjXmjs/edit?usp=sharing&ouid=106392091722319456192&rtpof=true&sd=true){:target='_blank'}
+[期中報題連結](https://docs.google.com/presentation/d/1YSgPmqzaFSmbVI4q67f7RHvS85JjXmjs/edit?usp=sharing&ouid=106392091722319456192&rtpof=true&sd=true)
 
 老師遠距諮詢：[老師遠距諮詢連結]()
 
