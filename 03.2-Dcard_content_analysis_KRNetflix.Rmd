@@ -1,0 +1,260 @@
+---
+title: "Dcard_content_analysis"
+author: "快樂RRRRRR"
+date: "2022/04/11"
+output:
+  html_document:
+    number_sections: no
+    theme: united
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+    toc_float:
+      collapsed: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = 'hold', comment = '#>', error = TRUE)
+```
+
+
+# Library
+```{r}
+### Library 
+library(jsonlite)
+library(tidyverse)
+library(jiebaR)
+library(tidytext)
+```
+
+# 繪圖
+```{r}
+library(showtext)
+showtext.auto(enable = TRUE)
+font_add("jf-openhuninn", "jf-openhuninn-1.1.ttf")
+font_add("jf-jinxuan-3.0 Book", "jf-jinxuan-3.0-book.otf")
+# 金萱粉圓體是開源的
+
+th <- 
+  theme(title = element_text(family="jf-jinxuan-3.0 Book"),
+        text = element_text(family="jf-jinxuan-3.0 Book"), 
+        axis.text.y = element_text(family="jf-jinxuan-3.0 Book"),
+        axis.text.x = element_text(family="jf-jinxuan-3.0 Book"),
+        legend.text = element_text(family="jf-jinxuan-3.0 Book"),
+        plot.title = element_text(family="jf-jinxuan-3.0 Book")
+        )
+
+```
+
+# 詞頻
+```{r}
+Calc_Word_Frequency <- function(df_Content, new_def_word=c()) { 
+  df_Content_rev <- df_Content %>%
+    select(id, title, content, createdAt) %>% distinct() %>%
+    mutate(content = str_remove_all(content, "\n|\r|\t|:")) %>%
+    mutate(content = str_remove_all(content, "[a-zA-Z0-9]+")) %>%
+    mutate(content = str_replace_all(content, " ", "")) 
+  return(df_Content_rev)
+  
+  stopWords <- read_rds("./stopWords.rds")
+  stopWords <- bind_rows(stopWords, tibble(word=c("機智醫生", "黑道律師", "文森佐", "驅魔", "麵館", "海岸村恰恰恰","二十五","二十一","婚詞","離曲","海岸村","皆","第集","真的","人","說","好","最","一起","想" )))
+  #cutter <- worker(stop_word = "./stopWords.rds")
+  #stopWords %>% view
+  cutter <- worker()
+  new_user_word(cutter, words = new_def_word)
+  WF_Result <- df_Content_rev %>%
+    mutate(content_segment = purrr::map(content, function(x)segment(x, cutter))) %>%
+    unnest(content_segment) %>%
+    rename(word = content_segment) %>% 
+    #filter(!word %in% as.character(stopWords$word)) %>%
+    anti_join(stopWords) %>%
+    group_by(word) %>% 
+    summarise(word_frequency =  n())%>%
+    arrange(desc(word_frequency)) %>%
+    ungroup
+  return (WF_Result)
+} # // Calc_Word_Frequency(Dcard_Content, ) 計算詞頻的函式
+
+
+Vincenzo_wf <- 
+  Calc_Word_Frequency(
+    Vincenzo_df_Content %>% select(-topics) %>% distinct, new_def_word=c("黑道律師","文森佐")) %>%
+   mutate(doc = "黑道律師文森佐") %>% select(doc, everything())
+Chia_wf <-
+  Calc_Word_Frequency(
+    Chia_df_Content %>% select(-topics) %>% distinct, new_def_word=c("海岸村恰恰恰","洪班長","海岸村","坎離","奶奶")) %>%
+   mutate(doc = "海岸村恰恰恰") %>% select(doc, everything())
+Counter_wf <-
+  Calc_Word_Frequency(
+    Counter_df_Content %>% select(-topics) %>% distinct, new_def_word=c("驅魔","麵館","蕭醫師")) %>%
+   mutate(doc = "驅魔麵館") %>% select(doc, everything())
+Marriage_wf <-
+  Calc_Word_Frequency(
+    Marriage_df_Content %>% select(-topics) %>% distinct, new_def_word=c("婚詞","離曲","史避影","")) %>%
+   mutate(doc = "婚詞離曲") %>% select(doc, everything())
+Twentyfive_wf <- 
+  Calc_Word_Frequency(
+    Twentyfive_df_Content %>% select(-topics) %>% distinct, new_def_word=c("二十五","二十一","易辰","羅希度","希度","宥琳","金泰梨")) %>%
+   mutate(doc = "二十五二十一") %>% select(doc, everything())
+
+Doctor_df_Content$content <- Doctor_df_Content$content %>% str_replace_all("翊俊", "翊晙")
+Doctor_wf <- 
+  Calc_Word_Frequency(
+    Doctor_df_Content %>% select(-topics) %>% distinct , 
+    new_def_word=c("機智醫生","雋婠", "頌和","翊晙","翊頌","翊順","翊純")) %>%
+   mutate(doc = "機智醫生生活") %>% select(doc, everything())
+
+
+```
+## 繪圖
+```{r}
+R <- bind_rows(Vincenzo_wf, Chia_wf, Counter_wf, Marriage_wf, Twentyfive_wf, Doctor_wf)
+R %>%
+  group_by(doc) %>%
+  top_n(8, word_frequency) %>%
+  ungroup %>%
+  mutate(
+    doc = factor(doc),
+    word = reorder_within(word, word_frequency,doc) # 排序
+  ) %>%
+  #mutate(word = reorder(word, word_frequency)) %>%
+  ggplot() +
+  aes(word, word_frequency,  fill=doc) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~doc, ncol = 3, scales = "free") +
+  coord_flip() +
+  scale_x_reordered() + # 排序
+  theme_bw() + th
+```
+
+
+
+# TF-IDF
+```{r}
+R <- bind_rows(Vincenzo_wf, Chia_wf, Counter_wf, Marriage_wf, Twentyfive_wf, Doctor_wf)
+
+RR <- R %>%
+  bind_tf_idf(word, doc, word_frequency) %>%
+  arrange(desc(tf_idf))
+
+RR %>%
+  group_by(doc) %>% # summarize by channel (= youtuber)
+  top_n(10, tf_idf) %>% # select top 10 keywords for each channel
+  arrange(desc(tf_idf)) %>% # order by tf-idf
+  mutate( word = reorder(word, tf_idf)) %>%
+  ggplot() +
+  aes(word, tf_idf, fill = doc) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~doc, ncol = 3, scales = "free") +
+  coord_flip() +
+  theme_bw() + th
+```
+
+
+# co-occurence matrix
+co-occurence: 兩個字出現在同一篇文章的比率有多少
+
+```{r}
+library(widyr) 
+
+
+### 僅斷詞
+Cut_Word <- function(df_Content, new_def_word=c()) { 
+  df_Content_rev <- df_Content %>%
+    select(id, title, content, createdAt) %>% distinct() %>%
+    mutate(content = str_remove_all(content, "\n|\r|\t|:")) %>%
+    mutate(content = str_remove_all(content, "[a-zA-Z0-9]+")) %>%
+    mutate(content = str_replace_all(content, " ", "")) 
+  
+  stopWords <- read_rds("./stopWords.rds")
+  stopWords <- bind_rows(stopWords, tibble(word=c("機智醫生", "黑道律師", "文森佐", "驅魔", "麵館", "海岸村恰恰恰","二十五","二十一","婚詞","離曲","海岸村","皆","第集","真的","人","說","好","最","一起","想" )))
+  #cutter <- worker(stop_word = "./stopWords.rds")
+  #stopWords %>% view
+  cutter <- worker()
+  new_user_word(cutter, words = new_def_word)
+  WF_Result <- df_Content_rev %>%
+    mutate(content_segment = purrr::map(content, function(x)segment(x, cutter))) %>%
+    unnest(content_segment) %>%
+    rename(word = content_segment)
+  return (WF_Result)
+} # // Cut_Word(Dcard_Content, ) 斷詞函式
+
+#Vincenzo_cut <- 
+#  Cut_Word(
+#    Vincenzo_df_Content %>% select(-topics) %>% distinct, new_def_word=c("黑道律師","文森佐")) %>%
+#   mutate(doc = "黑道律師文森佐") %>% select(doc, everything())
+#Chia_cut <-
+#  Cut_Word(
+#    Chia_df_Content %>% select(-topics) %>% distinct, #new_def_word=c("海岸村恰恰恰","洪班長","海岸村","坎離","奶奶")) %>%
+#   mutate(doc = "海岸村恰恰恰") %>% select(doc, everything())
+#Counter_cut <-
+#  Cut_Word(
+#    Counter_df_Content %>% select(-topics) %>% distinct, #new_def_word=c("驅魔","麵館","蕭醫師")) %>%
+#   mutate(doc = "驅魔麵館") %>% select(doc, everything())
+#Marriage_cut <-
+#  Cut_Word(
+#    Marriage_df_Content %>% select(-topics) %>% distinct, #new_def_word=c("婚詞","離曲","史避影","")) %>%
+#   mutate(doc = "婚詞離曲") %>% select(doc, everything())
+#Twentyfive_cut <- 
+#  Cut_Word(
+#    Twentyfive_df_Content %>% select(-topics) %>% distinct, #new_def_word=c("二十五","二十一","易辰","羅希度","希度","宥琳","金泰梨")) %>%
+#   mutate(doc = "二十五二十一") %>% select(doc, everything())
+
+Doctor_df_Content$content <- Doctor_df_Content$content %>% str_replace_all("翊俊", "翊晙")
+Doctor_cut <- 
+  Cut_Word(
+    Doctor_df_Content %>% select(-topics) %>% distinct , 
+    new_def_word=c("機智醫生","雋婠", "頌和","翊晙","翊頌","翊順","翊純")) %>%
+   mutate(doc = "機智醫生生活") %>% select(doc, everything())
+
+
+
+  
+  
+tmp <- Doctor_wf %>% top_n(10, word_frequency)
+Doctor_cut %>% select(id, word) %>% distinct() %>% subset(word %in% tmp$word) %>%
+  pairwise_count(word, id, sort = TRUE, upper = FALSE) %>%
+  ggplot() +
+  aes(item1, item2, fill = n)  +
+  geom_tile(color = "white") + #假設都填寫white
+  scale_fill_gradient2(low = "white", high = "red",name="Co-occurence") +
+  theme_bw() +
+  labs(title = "Co-occurence Matrix - 機智醫生生活")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + th
+
+
+```
+# RAKE Algorithm
+```{r}
+Doctor_cut %>% select(id, word) %>% distinct() %>%
+  pairwise_count(word, id, sort = TRUE, upper = FALSE) 
+a <-Doctor_cut %>% slice(225:235) %>% distinct %>% select(word) %>% slice(5) %>% as.character() 
+print(identical(a, ""))
+```
+
+
+# 非負分解矩陣
+
+```{r}
+
+```
+
+
+
+# 非負稀疏主成分分析
+```{r}
+
+```
+
+# LDA
+```{r}
+
+```
+
+
+# 情感分析
+```{r}
+
+```
+

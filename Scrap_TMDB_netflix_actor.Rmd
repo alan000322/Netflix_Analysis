@@ -25,6 +25,7 @@ library(tidyverse)
 library(rvest) #read_html html_nodes(), html_text()
 
 ### Param & Var
+
 Netflix_df <- read_csv("Netflix_df_zh-name.v0528.csv") # 讀取檔案
 NetflixKR_id_zhname_df <- Netflix_df %>% select(id, movie_zh_name, origin_country) %>% distinct() %>% drop_na() %>% filter(origin_country == "KR")
 

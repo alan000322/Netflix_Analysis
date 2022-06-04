@@ -22,21 +22,22 @@ knitr::opts_chunk$set(echo = TRUE, results = 'hold', comment = '#>', error = TRU
 ```{r}
 ### Library 
 library(jsonlite)
-library(dplyr)
+library(tidyverse)
+library(stringr)
 ```
 Dcard API 說明文件：https://blog.jiatool.com/posts/dcard_api_v2/
 
 
 # 抓取文章列表
 ```{r}
-board <- 'netflix' # // 填寫所選定之看板
+board <- 'tvepisode' # // 填寫所選定之看板
 
 
 Dcard_Netflix_Article_df <- tibble()
 url_init <- 
     str_c( "https://www.dcard.tw/service/api/v2/forums/", board, "/posts?popular=false&limit=100" )
 total_page <- 600
-for (i in c(11:50)) {
+for (i in c(150:150)) {
   #print(url_r)
   if (i == 0) { # 第一輪
     Dcard_Netflix_Article_df <- url_init %>% fromJSON() %>% as_tibble()
@@ -44,7 +45,7 @@ for (i in c(11:50)) {
     Sys.sleep(random_num) #睡覺中
     remove(random_num) #釋放變數
     
-    print(paste('RUN    ', 100*i/total_page, "%")) # 進度條
+    print(paste(i,'RUN    ', 100*i/total_page, "%")) # 進度條
     next
   }
   last <- tail(Dcard_Netflix_Article_df, 1) %>% select(id) %>% as.character() #取得最後一篇文章的 id
@@ -55,13 +56,14 @@ for (i in c(11:50)) {
   random_num <- runif(1, 10, 20) #隨機睡覺取值
   Sys.sleep(random_num) #睡覺中
   remove(random_num) #釋放變數
-  print(paste('RUN    ', 100*i/total_page, "%"))
+  print(paste(i,'RUN    ', 100*i/total_page, "%"))
 } # for (i in c(0:total_page))
 
 
-
 Dcard_Netflix_Article_df %>% tail(5)
-saveRDS(Dcard_Netflix_Article_df, "Dcard_Netflix_Article_df.rds")
+Dcard_Netflix_Article_df_tvepisode <- Dcard_Netflix_Article_df
+saveRDS(Dcard_Netflix_Article_df_tvepisode, "Dcard_Netflix_Article_df_tvepisode.rds")
+
 ```
 
 
@@ -71,42 +73,25 @@ saveRDS(Dcard_Netflix_Article_df, "Dcard_Netflix_Article_df.rds")
 #Dcard_Netflix_Article_df$id %>% length
 Netflix_df_zh_all <- read_csv("Netflix_df_zh-name_v0528.csv")
 #Netflix_df_zh_all$movie_zh_name %>% unique %>% str_replace_all("\\W+", "")
-Proposal_df <- Dcard_Netflix_Article_df %>%
-  filter( str_detect(title, "社內相親") )  # 我只抓社內相親
 
-Proposal_Content <- tibble()
-proposal_content_length <- Proposal_df$id %>% length
-for ( id_num in c(33:33) ) {
-  id <- Proposal_df$id[id_num]
-  url_content <- str_c("https://www.dcard.tw/service/api/v2/posts/" , id)
-  print(paste(id_num, url_content))
-  
-  T_List <- url_content %>% fromJSON()
-  Tmp <-tibble(
-    id = T_List$id,
-    title = T_List$title, 
-    content = T_List$content %>% str_replace_all("\\W+", ""),
-    topics = T_List$topics %>% unlist,
-    school = T_List$school,
-    gender = T_List$gender,
-    categories = T_List$categories,
-    anonymousSchool = T_List$anonymousSchool,
-    anonymousDepartment = T_List$anonymousDepartment,
-    createdAt = T_List$createdAt,
-    updatedAt = T_List$updatedAt,
-    commentCount = T_List$commentCount,
-    likeCount = T_List$likeCount,
-    collectionCount = T_List$collectionCount,
-  )
-  Proposal_Content <- bind_rows(Proposal_Content, Tmp)
-  random_num <- runif(1, 10, 20) #隨機睡覺取值
-  Sys.sleep(random_num) #睡覺中
-  remove(random_num) #釋放變數
-  #break 33
-    
-}
+Dcard_Netflix_Article_df_tvepisode %>%
+  filter( str_detect(title, "文森佐") | str_detect(title, "黑道律師"))
 
-Proposal_Content 
+Dcard_Netflix_Article_df_tvepisode %>%
+  filter( str_detect(title, "海岸村"))
+
+Dcard_Netflix_Article_df %>%
+  filter( str_detect(title, "婚詞離曲"))
+
+Dcard_Netflix_Article_df %>%
+  filter( str_detect(title, "驅魔"))
+
+Dcard_Netflix_Article_df %>%
+  filter( str_detect(title, "二十五") | str_detect(title, "2521"))
+
+Dcard_Netflix_Article_df %>%
+  filter( str_detect(title, "機智醫生"))
+
 
 
 ```
