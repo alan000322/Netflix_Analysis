@@ -1,0 +1,73 @@
+---
+title: "Flixpatrol_crawl(只有韓國資料的部分)"
+author: "快樂RRRRR"
+date: "2022/05/29"
+output:
+  html_document:
+    number_sections: no
+    theme: united
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+    toc_float:
+      collapsed: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = 'markup', comment = '#>', error = TRUE)
+```
+
+備註：因為台灣的部分當時是用python處理的～所以這裡就沒有那個code，但寫法應該差不多
+
+### Library
+```{r message=FALSE, warning=FALSE}
+### library
+library(tidyverse)
+library(rvest) #read_html html_nodes(), html_text()
+
+# 2020 -> 33-53
+# 2021 -> 1-52
+# 2022 -> 1-15
+```
+
+# 日期處理
+```{r message=FALSE, warning=FALSE}
+Date <- c()
+for (i in c(1:21)) {
+  i = as.character(i)
+  if ( nchar(i) == 1 ) pre <- "00"
+  else if ( nchar(i) == 2 ) pre <- "0"
+  else pre <- ""
+  date <- str_c(pre, i)
+  #print(date)
+  Date <- append(Date, date)
+  #break
+}
+Date
+
+```
+
+# Main Program
+```{r}
+country <- "south-korea"
+url <- str_c("https://flixpatrol.com/top10/netflix/", country, "/")
+year <- "2022"
+#print(url)
+
+#Netflix_kr_ranking_rawdata <- tibble()
+for (date in Date) {
+  FlixPatrol_df_tmp <- url %>% str_c(year,"-",date) %>% read_html %>% html_nodes('#netflix-2 > div.-mx-content > div > div') %>% 
+    html_table() %>% as.data.frame() %>% as_tibble() %>%
+    mutate(Year = year, Week = as.integer(date), Ranking = X1, TV = X2) %>%
+    select(Year, Week, Ranking, TV)
+  Netflix_kr_ranking_rawdata <- bind_rows(Netflix_kr_ranking_rawdata, FlixPatrol_df_tmp)
+  
+  random_num <- runif(1, 5, 10) #隨機睡覺取值
+  Sys.sleep(random_num) #睡覺中
+  remove(random_num) #釋放變數
+  print(str_c(year,"-",date,"  DONE."))
+}
+
+
+saveRDS(Netflix_kr_ranking_rawdata, "./data_storage/Netflix_Korea_Ranking(without_join).rds")
+```

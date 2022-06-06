@@ -16,7 +16,8 @@ library(jsonlite)
 # read_csv_tvname
 ```{r}
 #tvname <- read_csv("Ranking_Netflix_TW.csv")
-tvname_more <- read_csv("Ranking_Netflix_TW_more.csv")
+#tvname_more <- read_csv("Ranking_Netflix_TW_more.csv")
+tv_korea <- readRDS("./data_storage/Netflix_Korea_Ranking(without_join).rds")
 ```
 # parse json to tibble
 ```{r}
@@ -148,3 +149,69 @@ tvname_mod <- tvname_mod %>%
 
 
 ```
+
+
+# Korea 資料
+如果已經有的資料，直接跟taiwan的做join
+```{r}
+tv_korea <- tv_korea %>% left_join(Netflix_tw_ranking %>% select(-Year, -Week, -Ranking) %>% distinct(), by="TV") 
+
+tv_korea_nameNA <- tv_korea %>% left_join(Netflix_tw_ranking %>% select(-Year, -Week, -Ranking), by="TV") %>%
+  select(-Year, -Week, -Ranking) %>%
+  distinct %>%
+  filter(is.na(movie_zh_name)) %>% mutate(TV_mod = str_to_lower(TV) %>% str_replace_all(" ","+") ) %>%
+  select(TV, TV_mod)
+```
+
+```{r}
+df_TVResult <- tibble()
+length <- nrow(tv_korea_nameNA)
+for (i in c(62:length)) {
+  url <- str_c(
+    "https://api.themoviedb.org/3/search/tv?api_key=97d7f30f1de5db069152465598a072f1&query=", 
+    tv_korea_nameNA$TV_mod[i])
+  df_tmp <- fromJSON(url) %>% as_tibble()
+  df_tmp$results <- df_tmp$results %>% mutate(TV = tv_korea_nameNA$TV[i]) %>% select(TV, everything())
+  df_TVResult <- bind_rows(df_TVResult, df_tmp$results) 
+  print(
+    paste('Finished...', i, "...   ",round(100*i/length, 2), "%" ) # 進度條
+  )
+  random_num <- runif(1, 5, 10) #隨機睡覺取值
+  Sys.sleep(random_num) #睡覺中
+  remove(random_num) #釋放變數
+}
+# 36 Doomed Marriage 搜尋不到
+# 38 Pretty Guardians Sailor Moon Eternal The Movie 
+# 61 The Fisherman and the City
+
+df_TVResult
+
+
+
+
+```
+
+# spreadsheet 手動處理
+```{r}
+tv_korea_NA_info <- read_csv("bak/手動處理KR_done.csv")
+tv_korea_NA_info
+K <- tv_korea %>%
+  filter(is.na(movie_zh_name)) %>% select(Year, Week, Ranking, TV) %>%
+  left_join(tv_korea_NA_info) %>%
+  left_join(Res) %>%
+  mutate(first_air_date=first_air_date %>% as.character()) %>%
+  mutate(category = "") %>%
+  select(Year, Week, Ranking, TV, movie_zh_name, first_air_date, category, origin_country, original_language) 
+
+
+Netflix_Korea_Ranking <- tv_korea %>%
+  filter(!is.na(movie_zh_name)) %>% select(Year, Week, Ranking, TV, movie_zh_name, first_air_date, category, origin_country, original_language) %>%
+  bind_rows(K) %>%
+  arrange(Year,Week,Ranking)
+
+Netflix_Korea_Ranking
+
+
+write_csv(Netflix_Korea_Ranking, "data_storage/Netflix_Korea_Ranking.csv")
+```
+
