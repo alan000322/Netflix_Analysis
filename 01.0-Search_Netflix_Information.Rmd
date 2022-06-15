@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE, results = 'markup', comment = '#>', error = T
 
 備註：因為台灣的部分當時是用python處理的～所以這裡就沒有那個code，但寫法應該差不多
 
-### Library
+# Library
 ```{r message=FALSE, warning=FALSE}
 ### library
 library(tidyverse)

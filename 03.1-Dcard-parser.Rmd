@@ -67,8 +67,8 @@ saveRDS(Dcard_Netflix_Article_df_tvepisode, "Dcard_Netflix_Article_df_tvepisode.
 ```
 
 
-# 抓取文章內容 
-先確認要抓哪一部劇 -> 從Dcard title 中 filter 出來 -> 再去一篇一篇抓內文
+# 抓取文章內容 (測試)
+先確認要抓哪一部劇 -> 從Dcard title 中 filter 出來 -> 再去一篇一篇抓內文(03.2)
 ```{r}
 #Dcard_Netflix_Article_df$id %>% length
 Netflix_df_zh_all <- read_csv("Netflix_df_zh-name_v0528.csv")
@@ -94,5 +94,12 @@ Dcard_Netflix_Article_df %>%
 
 
 
+Dcard_df_netflix <- readRDS("data_storage/Dcard/Dcard_Netflix_Article_df_netflixforum.rds")
+Dcard_df_tv <- readRDS("data_storage/Dcard/Dcard_Netflix_Article_df_tvepisodeforum.rds")
+Dcard_df_netflix %>%
+  filter( str_detect(excerpt, "宋江"))
+
+Dcard_df_tv %>%
+  filter( str_detect(excerpt, "宋江"))
 ```
 
