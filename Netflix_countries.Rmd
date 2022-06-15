@@ -1,0 +1,323 @@
+---
+title: "Netflix"
+author: "快樂RRRRR"
+date: "2022/05/27"
+output:
+  html_document:
+    number_sections: no
+    theme: united
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+    toc_float:
+      collapsed: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = 'markup', comment = '#>', error = TRUE)
+options(stringsAsFactors = F)
+options(scipen = 999)
+```
+
+### Netflix 電視劇各國出品總佔比
+
+#### step 1 Data clean
+```{r}
+library(tidyverse)
+library(rvest) 
+library(jsonlite)
+library(stringr)
+library(cowplot)
+library(scales)
+
+# Netflix_all <- read_csv("Netflix_countries.csv")
+# Netflix_all %>% filter(origin_country=="BE") %>% view
+
+# saveRDS(Netflix_all, file = "Netflix_all.rds")
+
+Netflix_all <- readRDS("Netflix_all.rds")
+
+Netflix_all %>% filter(origin_country == "KR") %>%
+  filter(Year=="2021") %>%
+  distinct(movie_zh_name) %>%
+  count() 
+
+Netflix_countries <- Netflix_all%>%
+  group_by(Year, Week, origin_country) %>%
+  count() %>% 
+  arrange(Year, Week) %>% 
+  ungroup() %>%
+  group_by(Year, Week) %>%
+  mutate(percentage = n/sum(n)*100,time = paste(Year, Week, sep="_")) %>%
+  # mutate(percentage = label_percent()(percentage))%>%
+  mutate(timeofyear= ifelse(Week<= 26, "上半年", "下半年"),
+         timeofyear= str_c(Year, timeofyear)) %>% 
+  mutate(countries = ifelse(origin_country %in% c("TW", "JP", "US", "KR"),print(origin_country),"other")) %>%
+  mutate(國家 = factor(countries, levels = c("other", "TW", "JP", "US", "KR"))) %>%
+  ungroup() %>%
+  # group_by(time, countries) %>%
+  # mutate(countries = reorder(countries, percentage)) %>% 
+  group_by(time) %>%
+  arrange(percentage) %>%
+  arrange(time) 
+  # mutate(percentage=reorder(percentage, n)) 
+#paste(round(n/sum(n)*100), "%", sep = "")
+
+
+```
+
+#### step 2 Visualization
+```{r, fig.height= 4, fig.width=5}
+### library
+th <- 
+  theme(title = element_text(family="Heiti TC Light"),
+        text = element_text(family="Heiti TC Light"), 
+        axis.text.y = element_text(family="Heiti TC Light"),
+        axis.text.x = element_text(family="Heiti TC Light"),
+        legend.text = element_text(family="Heiti TC Light"),
+        plot.title = element_text(family="Heiti TC Medium"))
+
+th_format <- 
+  theme(axis.text = element_text(size=8),
+        plot.title = element_text(vjust = 10))
+
+th_type <-
+  theme(plot.background = element_rect(color =  "grey30", fill = "grey30"),
+        plot.title = element_text(color="white",size = 18, hjust = 0),
+        title = element_text(color = "white"),
+        axis.text = element_text(colour = "white"),
+        panel.border = element_blank(),
+        legend.text  = element_text(color = "white"))
+        # axis.title = element_text(colour = "white"))
+
+second2020 <- Netflix_countries %>%
+  # group_by(countries)%>%
+  # count(countries)
+  filter(timeofyear == "2020下半年") %>%
+  ggplot() + aes(x=Week, y= percentage , fill = 國家) +
+  geom_col() +
+  scale_fill_manual(
+    label = c(
+      'other'="其他",
+      'TW' = "台灣",
+      'JP' = "日本",
+      'US' = "美國",
+      'KR' = "韓國"
+    ),
+    values = c(
+      'other'="#BABABA",
+      'TW' = "#81B4E1",
+      'JP' = "#F5BF70",
+      'US' = "#F09191",
+      'KR' = "#7C75B6"
+    )) +
+  scale_y_continuous(breaks = c(0,50,100))+
+  # labs(title="Netflix 台灣站上榜電視劇出品國佔比",
+  #     subtitle = "2020年8月至今 每週Netflix台灣站發布的Top 10榜單，各出品國佔比",
+  #     y="佔比",
+  #     x="週數")+
+  theme_void() +
+  theme(legend.position="none", plot.margin = margin(10, 3, 2, 10)) + th_format+th+th_type
+
+frist2021 <- Netflix_countries %>%
+  filter(timeofyear == "2021上半年") %>%
+  ggplot() + aes(x=Week, y= percentage, fill = 國家) +
+  geom_col() +
+  scale_fill_manual(
+    label = c(
+      'other'="其他",
+      'TW' = "台灣",
+      'JP' = "日本",
+      'US' = "美國",
+      'KR' = "韓國"
+    ),
+    values = c(
+      'other'="#BABABA",
+      'TW' = "#81B4E1",
+      'JP' = "#F5BF70",
+      'US' = "#F09191",
+      'KR' = "#7C75B6"
+    )) +
+  scale_y_continuous(breaks = c(0,50,100))+
+  # labs(title="Netflix 上榜電視劇出品國佔比",
+  #     subtitle = "2020年8月至今每週Netflix發布的Top 10榜單，各出品國佔比",
+  #     y="佔比",
+  #     x="週數")+
+  theme_void() +
+  theme(legend.position="none", plot.margin = margin(2, 3, 2, 10)) + th_format + th + th_type
+
+second2021 <- Netflix_countries %>%
+  filter(timeofyear == "2021下半年") %>%
+  ggplot() + aes(x=Week, y= percentage, fill = 國家) +
+  geom_col() +
+  scale_fill_manual(
+    label = c(
+      'other'="其他",
+      'TW' = "台灣",
+      'JP' = "日本",
+      'US' = "美國",
+      'KR' = "韓國"
+    ),
+    values = c(
+      'other'="#BABABA",
+      'TW' = "#81B4E1",
+      'JP' = "#F5BF70",
+      'US' = "#F09191",
+      'KR' = "#7C75B6"
+    )) +
+  scale_y_continuous(breaks = c(0,50,100))+
+  # labs(title="Netflix 上榜電視劇出品國佔比",
+  #     subtitle = "2020年8月至今每週Netflix發布的Top 10榜單，各出品國佔比",
+  #     y="佔比",
+  #     x="週數")+
+  theme_void() +
+  theme(legend.position="none", plot.margin = margin(2, 3, 2, 10)) + th_format + th + th_type
+
+frist2022 <-Netflix_countries %>%
+  filter(timeofyear == "2022上半年") %>%
+  ggplot() + aes(x=Week, y= percentage, fill = 國家) +
+  geom_col() +
+  scale_fill_manual(
+    label = c(
+      'other'="其他",
+      'TW' = "台灣",
+      'JP' = "日本",
+      'US' = "美國",
+      'KR' = "韓國"
+    ),
+    values = c(
+      'other'="#BABABA",
+      'TW' = "#81B4E1",
+      'JP' = "#F5BF70",
+      'US' = "#F09191",
+      'KR' = "#7C75B6"
+    )) +
+  scale_y_continuous(breaks = c(0,50,100))+
+  labs(x="週數")+
+  theme_void() +
+  theme(legend.position="bottom", plot.margin = margin(2, 3, 10, 10)) + th_format + th + th_type
+
+plot_grid(second2020, frist2021, second2021, frist2022,labels = "",nrow = 4) 
+
+  
+
+```
+
+### 歷年漫改數量
+```{r}
+# df_comics <- read.csv("Netflix_comics.csv")
+# 
+saveRDS(df_comics,file = "df_comics.rds")
+df_comics <- readRDS("df_comics.rds")
+df_comics %>%
+  group_by(上架時間) %>%
+  filter(上架時間!=2022) %>%
+  mutate(上架時間 = as.numeric(上架時間))%>%
+  count() %>% 
+  ungroup() %>%
+  ggplot()+aes(factor(上架時間),n,fill=factor(上架時間)) +
+  geom_col(width = 0.7)+
+  # geom_line(aes(factor(上架時間),n),color="white")+
+  scale_fill_manual(
+    values = c(
+      '2014'= "#8AD0E0",
+      '2015' = "#86CFE4",
+      '2016' = "#86C8E6",
+      '2017' = "#7BBDE6",
+      '2018' = "#81B4E1",
+      '2019'="#81B4E1",
+      '2020'="#65A1D8",
+      '2021'="#5492CE"))+
+  #scale_x_continuous(limits = c(2014,2022), breaks = c(2014,2015,2016,2017,2018,2019,2020,2021,2022))+
+  labs(title = "2014年-2021年 Netflix 上架韓漫改編韓劇數量",
+       subtitle = "近年來韓漫改編韓劇數量逐年增加",
+       y="數量")+
+  theme_void() +
+  geom_text(aes(label=n), vjust=2, size=4.5, color="white", face="bold")+
+  th+th_type+
+  theme(plot.margin = margin(10, 3, 10, 10),
+        legend.position="none",
+        # axis.title.y = element_text(color = "white",angle=90),
+        axis.text.y = element_blank(),
+        plot.title = element_text(color="white",size = 18, hjust = 0.5),
+        plot.subtitle = element_text(color="white",size =12, hjust = 0.5))
+
+```
+
+```{r}
+# svod_ncc <- read.csv("SVOD_NCC.csv")
+
+# saveRDS(svod_ncc,file="svod_ncc.rds")
+svod_ncc <- readRDS("svod_ncc.rds")
+
+svod_ncc %>%
+  mutate(Platforms = reorder(Platforms,sor), sor = sor*100) %>%
+  ggplot()+aes(sor, Platforms, fill=Platforms)+
+  geom_col()+
+  scale_fill_manual(
+    values = c(
+      'Netflix'="#E07E78",
+      'KKTV' = "#E9A77C",
+      'iQiyi Taiwan' = "#E48D7B",
+      'FriDay' = "#EDBB6C",
+      'FOX+' = "#F2DA6F",
+      'Line TV'="#D4E07D",
+      'HamiVideo'="#ADD092",
+      '公視+'="#7EC1A4",
+      'WeTV（騰訊）'="#8AC6B0",
+      'myVideo'="#77C2BF",
+      'Other'="#73BAC7",
+      'Catchplay'="#65B0DB"))+
+  scale_x_continuous(limits = c(0, 70, 20))+
+  geom_text(aes(label=paste(sor, "%",sep="") ), hjust=-0.2, size=3.5, color="white", face="bold")+ theme_void()+
+  theme(legend.position="none",
+        plot.background = element_rect(fill = "grey30"),
+        plot.margin = margin(10, 10, 10, 10),
+        plot.title = element_text(color="white",size = 18, hjust = 0.3),
+        plot.subtitle = element_text(color="white",size = 10, hjust = 0.3),
+        title = element_text(color = "white"),
+        axis.text = element_text(colour = "white"),
+        axis.text.x = element_blank(),
+        axis.title = element_text(colour = "white"),
+        axis.text.y  = element_text(hjust = 1, size = 10))+
+  labs(title="台灣付費串流影音服務訂閱比例",
+      subtitle = "資料來源：國家通訊傳播委員會109年匯流發展調查結果報告",
+      x="佔比(%)", y=NULL)+th
+
+```
+
+```{r}
+# svod_ncc %>%
+#   mutate(Platforms = reorder(Platforms,sor), sor = sor*100) %>%
+#   ggplot()+aes(sor, Platforms, fill=Platforms)+
+#   geom_col()+
+#   scale_fill_manual(
+#     values = c(
+#       'Netflix'="#E07E78",
+#       'KKTV' = "#9C97C5",
+#       'iQiyi Taiwan' = "#7C75B6",
+#       'FriDay' = "#9C97C5",
+#       'FOX+' = "#9C97C5",
+#       'Line TV'="#9DA4D2",
+#       'HamiVideo'="#9DA4D2",
+#       '公視+'="#9DA4D2",
+#       'WeTV（騰訊）'="#9DA4D2",
+#       'myVideo'="#A8ABD4",
+#       'Other'="#A8ABD4",
+#       'Catchplay'="#B8B2D8"))+
+#   scale_x_continuous(limits = c(0, 70, 20))+
+#   geom_text(aes(label=paste(sor, "%",sep="") ), hjust=-0.1, size=3.5, color="white", face="bold")+ theme_void()+
+#   theme(legend.position="none",
+#         plot.background = element_rect(fill = "grey30"),
+#         plot.margin = margin(10, 3, 10, 10),
+#         plot.title = element_text(color="white",size = 18, hjust = 0),
+#         title = element_text(color = "white"),
+#         axis.text = element_text(colour = "white"),
+#         axis.text.x = element_blank(),
+#         axis.title = element_text(colour = "white"),
+#         axis.text.y  = element_text(hjust = 1, face = "bold", size = 10))+
+#   labs(title="台灣付費串流影音服務訂閱比例",
+#       subtitle = "資料來源：國家通訊傳播委員會109年匯流發展調查結果報告",
+#       x="佔比", y=NULL)+th
+```
+

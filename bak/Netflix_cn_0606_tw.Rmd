@@ -1,7 +1,7 @@
 ---
-title: "combinedfinal_twkr"
-author: "ning"
-date: '2022-06-13'
+title: "Netflix"
+author: "快樂RRRRR"
+date: "2022/06/06"
 output:
   html_document:
     number_sections: no
@@ -19,12 +19,12 @@ options(stringsAsFactors = F)
 options(scipen = 999)
 ```
 
-### prepare data
+### 前10名韓劇之戲劇分類
 
 ```{r message=FALSE, warning=FALSE}
 ### library
 library(tidyverse)
-library(rvest) 
+library(rvest) #read_html html_nodes(), html_text()
 library(jsonlite)
 library(stringr)
 library(cowplot)
@@ -36,34 +36,21 @@ th <-
         legend.text = element_text(family="Heiti TC Light"),
         plot.title = element_text(family="Heiti TC Light")
         )
-
-
-### TW_Read CSV
+### Read CSV
 Netflix_tw <- read_csv("data/Netflix_Taiwan_Ranking.csv") # 讀取檔案
 
-### TW_filter for Korea drama only
+###filter for Korea drama only
 korea_drama_tw <- Netflix_tw %>% 
-  filter(origin_country == "KR")
-
-
-
-
-### KR_Read CSV
-Netflix_ratescore_kr <- read_csv("data/Netflix_Korea_Ranking.csv") # 讀取檔案
-
-### KR_filter for Korea drama only
-korea_drama_kr <- Netflix_ratescore_kr %>% 
   filter(origin_country == "KR")
 
 
 
 ```
 
-### TW_A: category from Netflix
+### AA: category from Netflix, without main category
 
 ```{r}
-
-## separate drama source, netflix category
+## separate drama source, and drama netflix category
 korea_drama_neflixcategory_tw <- 
 korea_drama_tw %>% 
   select(movie_zh_name, Year, Week, Ranking, category) %>% 
@@ -75,7 +62,7 @@ korea_drama_tw %>%
                            fromcomic=="No" &  frombook== "No"~ '無改編',
                            fromcomic=="No" &  frombook== "Yes"~ '書籍改編'),
          category= str_remove_all(category, "漫畫改編, |, 漫畫改編|書籍改編, |, 書籍改編"),    #以上處理戲劇來源
-         category= str_replace_all(category, "競賽實境", "競賽, 實境")   #以上處理戲劇分類項
+         category= str_replace_all(category, "競賽實境", "競賽, 實境")  
          )  
 
 
@@ -98,12 +85,30 @@ korea_drama_neflixcategory_tw %>%
   coord_flip()+
   th+
   labs(title= "Netflix台灣站每週上榜韓劇大熱元素",
-         subtitle= "統計時間：2020.8.10-2022.5.29",
+         subtitle= "時間統計自2020年8月10日至2022年5月29日",
     x= element_blank(),
     y="韓劇部數")
 
 
-## A02- map of netflix category
+## A02- heat map every week, by half year, drama category一版
+korea_drama_neflixcategory_tw %>%
+  mutate(timeofyear= ifelse(Week<= 26, "上半年", "下半年"),
+         timeofyear= str_c(Year, timeofyear)) %>%
+  mutate(weekseq= ifelse(Week<=26, Week, Week-26)) %>%
+  group_by(Year, Week) %>%
+  mutate(weekdrama= n()) %>%
+  ggplot(aes(x=weekseq, y=weekdrama, fill=genrenetflixcats))+
+  geom_col(position='fill')+
+  scale_x_continuous(name="周次", breaks=seq(1,27,2)) +
+  facet_grid(timeofyear ~ ., space = "free")+
+  th+
+  labs(title= "上榜韓劇之Netflix戲劇分類(每週韓劇的分類，一部多分類)",
+         subtitle= "時間統計自2020年8月10日至2022年5月29日",
+
+    y="各戲劇分類比例")
+
+
+## A03- heat map-another way二版
 th_format <- 
   theme(axis.text = element_text(size=8),
         plot.title = element_text(vjust = 10))
@@ -118,7 +123,7 @@ korea_drama_neflixcategory_tw %>%
   mutate(weekdrama= n()) %>% 
     ggplot(aes(x=Week, y=weekdrama, fill=genrenetflixcats))+
   geom_col(position='fill')+
-  labs(title= "Netflix台灣站上榜韓劇元素")+
+  labs(title= "台灣上榜韓劇之Netflix戲劇分類")+
   theme_void() +
   theme(legend.position="none") + 
   th_format+th
@@ -168,58 +173,18 @@ d <-
 plot_grid(a, b, c, d, labels = "",nrow = 4) 
 
 
-```
-
-
-### KR_A: category from Netflix
-
-```{r}
-## separate drama source netflix category
-korea_drama_neflixcategory_kr <- 
-korea_drama_kr %>% 
-  select(movie_zh_name, Year, Week, Ranking, category) %>% 
-  mutate(category= str_replace_all(category, "漫畫改編", "網路漫改")
-         ) %>% 
-  mutate(
-         category= str_remove_all(category, "網路漫改, |, 網路漫改|書籍改編, |, 書籍改編|, 原著改編|原著改編, "),    #以上處理戲劇來源
-         category= str_replace_all(category, "真人脫口秀", "脫口秀")     #以上整合名稱相近分類
-         )    
-
-
-korea_drama_neflixcategory_kr[c('genre1', 'genre2', 'genre3', 'genre4', 'genre5')] <- str_split_fixed(korea_drama_neflixcategory_kr$category, ', ', 5)
-
-korea_drama_neflixcategory_kr <- korea_drama_neflixcategory_kr %>% 
-  gather(genrenum, genrenetflixcats, genre1:genre5) %>% 
-  mutate(genrenetflixcats= ifelse(genrenetflixcats=="", NA, genrenetflixcats)) %>% 
-  filter(!is.na(genrenetflixcats)) 
-
-
-## A01:ggplot Netflix category
-korea_drama_neflixcategory_kr %>% 
-  select( -Ranking) %>% 
-  count(movie_zh_name, genrenetflixcats) %>% 
-  count(genrenetflixcats) %>% 
-  ggplot(aes(x=reorder(genrenetflixcats, n), y=n))+
-  geom_col(stat="identity", fill="#2A75A9")+
-  geom_text(aes(label = n), colour = "#d9713b", size=2.5)+
-  coord_flip()+
-  th+
-  labs(title= "Netflix韓國站每週上榜韓劇大熱元素",
-         subtitle= "統計時間：2020.8.10-2022.5.29",
-    x= element_blank(),
-    y="韓劇部數")
-
-
+# used for getting unique drama
+#distinct(movie_zh_name, .keep_all = TRUE)
 
 ```
 
 
 
-### TW_B 剎那花火或經久不衰-持續熱度
+
+### 剎那花火或經久不衰-持續熱度
 
 ```{r}
 ### clean data- get first place and total ranking times
-
 first_place_times_df_tw <- korea_drama_tw %>% 
   select(Year, Week, Ranking, movie_zh_name) %>% 
   filter(Ranking== 1) %>% 
@@ -239,13 +204,13 @@ ranking_times_df_tw %>% left_join(first_place_times_df_tw) %>%
          minus= ranking_times-first_place_times) 
 
 
+
 ```
 
+### 排名總表 字不要疊
 
 ```{r, fig.height= 9, fig.width=8}
-
-### B01:ggplot_barplot_times
-
+### B01:ggplot_barplot_times字不要疊
 joined_rankingtimes_tw %>% 
   pivot_longer(cols = c(minus, first_place_times),
     names_to = "type",
@@ -258,60 +223,43 @@ joined_rankingtimes_tw %>%
   coord_flip()+
   theme(legend.title=element_blank())+
   th+
-  labs(title= "Netflix台灣站曾上榜的韓劇",
-       subtitle= "統計時間：2020.8.10-2022.5.29",
+  labs(title= "台灣曾上榜韓劇之上榜次數",
+       subtitle= "時間統計自2020年8月10日至2022年5月29日",
+    #y= "韓劇上榜次數",
     x="韓劇名稱")
 ```
 
-
-
-### KR_B 剎那花火或經久不衰-持續熱度
+### 個案劇名次變化top5
 
 ```{r}
-### clean data- get first place and total ranking times
-first_place_times_df_kr <- korea_drama_kr %>% 
+### B02:ggplot_line plot by weeks: take drama with the top 5 most times
+top5drama_tw <- ranking_times_df_tw %>% 
+  slice(1:6) %>%             #according to ranking_time
+  select(movie_zh_name) %>% unlist()
+  
+korea_drama_tw %>% 
   select(Year, Week, Ranking, movie_zh_name) %>% 
-  filter(Ranking== 1) %>% 
-  count(movie_zh_name) %>% 
-  rename(first_place_times= n)
-
-
-ranking_times_df_kr <- korea_drama_kr %>% 
-  count(movie_zh_name) %>% 
-  arrange(desc(n)) %>% 
-  rename(ranking_times = n)
-
-
-joined_rankingtimes_kr <- 
-ranking_times_df_kr %>% left_join(first_place_times_df_kr) %>% 
-  mutate(first_place_times= replace_na(first_place_times, 0),
-         minus= ranking_times-first_place_times) 
-
-```
-
-
-```{r, fig.height= 14, fig.width= 7}
-### B01:ggplot_barplot_times
-joined_rankingtimes_kr %>% 
-  pivot_longer(cols = c(minus, first_place_times),
-    names_to = "type",
-    values_to = "times") %>%    #ranking_times: 最多次上榜為[機智醫生生活]共38 weeks, [認識的哥哥]31 weeks
-  ggplot(aes(x=reorder(movie_zh_name,times), y=times, fill= type))+
-  geom_col(stat='identity')+
-  scale_fill_manual(labels = c("該周為第1名次數", "該周為2-9名次數"),
-                    values = c("#DFC184", "#7EB5D6"))+
-  scale_y_continuous(name="韓劇上榜次數", limits=c(0, 40), breaks=c(0,5,10,15,20,25,30,35,40)) +
-  coord_flip()+
+  filter(movie_zh_name %in% top5drama_tw) %>% 
+  group_by(movie_zh_name) %>% 
+  mutate(weeknum= row_number()) %>%  
+  ## ggplot
+  ggplot()+
+  aes(x= weeknum, y= fct_rev(factor(Ranking)), group= movie_zh_name, colour= movie_zh_name)+
+  geom_line(size=1.5, alpha=0.7)+
+  geom_point(size=1.5)+
+  scale_color_manual(values=c("#7EB5D6", "#2A75A9", "#DFC184", "#8F6048", "#b6ac99", "#5F9EA0"))+
+  scale_x_continuous(name="上榜周次", breaks=seq(0,28,2)) +
   theme(legend.title=element_blank())+
   th+
-  labs(title= "Netflix韓國站曾上榜的韓劇",
-       subtitle= "統計時間：2020.8.10-2022.5.29",
-    x="韓劇名稱")
+  labs(title= "在台灣Netflix榜單上最久Top 5韓劇與其名次變化",
+       subtitle= "時間統計自2020年8月10日至2022年5月29日\n「二十五二十一」與「驅魔麵館」上榜次數相同並列第五",
+    y= "榜上名次")
+
 ```
 
 
 
-### TW_C highlight改編劇
+### highlight-改編劇
 
 ```{r, fig.height= 9, fig.width=8}
 distinct_source <- 
@@ -325,7 +273,7 @@ korea_drama_tw %>%
 
 joined_rankingtimes_tw %>% 
   left_join(distinct_source, by="movie_zh_name") %>%   #ranking_times: 最多次上榜為[機智醫生生活]共26 weeks, [黑道律師]24 weeks
-  ggplot(aes(x=reorder(movie_zh_name,ranking_times), y=ranking_times, fill= adapt))+
+  ggplot(aes(x=reorder(movie_zh_name,ranking_times), y=ranking_times, fill=adapt))+
   geom_col(stat='identity')+
   scale_fill_manual(labels = c("非改編劇", "改編劇"),
                     values = c("gray", "tomato"))+
@@ -333,82 +281,12 @@ joined_rankingtimes_tw %>%
   coord_flip()+
   theme(legend.title=element_blank())+
   th+
-  labs(title= "改編劇受台灣韓劇市場歡迎",
-       subtitle= "包括網路漫畫改編、書籍改編\n統計時間：2020.8.10-2022.5.29",
-    x="韓劇名稱")
-
-```
-
-
-```{r}
-#二版，只留部分
-
-joined_rankingtimes_tw %>% 
-  left_join(distinct_source, by="movie_zh_name") %>%   #ranking_times: 最多次上榜為[機智醫生生活]共26 weeks, [黑道律師]24 weeks
-  filter(adapt== "Yes") %>% 
-  ggplot(aes(x=reorder(movie_zh_name,ranking_times), y=ranking_times))+
-  geom_col(stat='identity')+
-  scale_y_continuous(name="韓劇上榜次數", limits=c(0, 15), breaks=c(0,5,10,15)) +
-  coord_flip()+
-  theme(legend.title=element_blank())+
-  th+
-  labs(title= "改編劇受台灣韓劇市場歡迎",
-       subtitle= "包括網路漫畫改編、書籍改編\n統計時間：2020.8.10-2022.5.29",
+  labs(title= "改編劇受台灣區韓劇市場歡迎",
+       subtitle= "包括網路漫畫改編、書籍改編\n時間統計自2020年8月10日至2022年5月29日",
     x="韓劇名稱")
 
 
-```
-
-
-
-### KR_C highlight實境劇
-
-```{r, fig.height= 14, fig.width= 7}
-## categorize which drama is "reality"
-reality_kr <- 
-korea_drama_kr %>% 
-  select(movie_zh_name, category) %>% 
-  mutate(reality= ifelse(str_detect(category, "實境"), "Yes", "No")) %>% 
-  distinct(movie_zh_name, .keep_all = T)
-
-## ggplot
-joined_rankingtimes_kr %>% 
-  left_join(reality_kr, by="movie_zh_name") %>%   #ranking_times: 最多次上榜為[機智醫生生活]共38 weeks, [認識的哥哥]31 weeks
-  ggplot(aes(x=reorder(movie_zh_name, ranking_times), y=ranking_times, fill= reality))+
-  geom_col(stat='identity')+
-  scale_fill_manual(labels = c("非實境劇" , "實境劇"),   
-                    values = c("gray", "tomato"))+
-  scale_y_continuous(name="韓劇上榜次數", limits=c(0, 40), breaks=c(0,5,10,15,20,25,30,35,40)) +
-  coord_flip()+
-  theme(legend.title=element_blank())+
-  th+
-  labs(title= "實境劇受韓國韓劇市場歡迎",
-       subtitle= "統計時間：2020.8.10-2022.5.29",
-    x="韓劇名稱")
-
 
 ```
-
-
-```{r}
-#二版，只留部分
-joined_rankingtimes_kr %>% 
-  left_join(reality_kr, by="movie_zh_name") %>%   #ranking_times: 最多次上榜為[機智醫生生活]共38 weeks, [認識的哥哥]31 weeks
-  filter(reality=="Yes") %>% 
-  ggplot(aes(x=reorder(movie_zh_name, ranking_times), y=ranking_times))+
-  geom_col(stat='identity')+
-  scale_y_continuous(name="韓劇上榜次數", limits=c(0, 30), breaks=c(0,5,10,15,20,25,30)) +
-  coord_flip()+
-  theme(legend.title=element_blank())+
-  th+
-  labs(title= "實境劇受韓國韓劇市場歡迎",
-       subtitle= "統計時間：2020.8.10-2022.5.29",
-    x="韓劇名稱")
-```
-
-
-
-
-
 
 
