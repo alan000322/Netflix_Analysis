@@ -58,5 +58,3 @@
 
 [中國流行語滲透台灣？從 Dcard 數據窺見年輕人網路用語趨勢](https://www.readr.tw/post/2836)
 
-## raw data(spreadsheet)
-https://docs.google.com/spreadsheets/d/1ed2u92zZ1Ex1_hdm8CYUeaiyg6jvBluUq646MuaBfr8/edit?usp=sharing
