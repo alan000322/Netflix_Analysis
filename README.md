@@ -3,39 +3,42 @@
 ## 資料內容
 ### 資料爬取與前處理
 #### 01.0-Search_Netflix_Information.Rmd
-收集 FlixPatrol 網站內容。 
+Collect content from the FlixPatrol website.
 #### 01.1-Search_Netflix_Information.Rmd
-收集 TMDB 上的資訊，搜尋戲劇的詳細資訊。
+Collect information from TMDB and search for detailed information about TV dramas.
 
 #### FlixPatrol_df.xlsx
-將 FlixPatrol 取得的資料與 TMDB join。並丟到 Google Spreadsheet 上進行人工檢查與加工處理。（本檔案將整個加工處理後的表下載成 excel 放置到這裡）
+Join data obtained from FlixPatrol with TMDB information and upload it to a Google Spreadsheet for manual review and processing. (Download the fully processed file as an Excel sheet and store it here.)
 
 #### 01.2-Netflix_add_zh_name.Rmd
-將人工檢查、標記好的台灣站、韓國站的表取得後，與 TMDB 網站對照，擷取中文劇名。
-（需再次人工檢查是否有誤）
+After retrieving the manually checked and labeled tables for the Taiwan and Korea regions, compare them with data from TMDB to extract the Chinese titles. 
+(Another manual review is needed to ensure accuracy.)
 
 #### 02-Scrap_TMDB_netflix_actor.Rmd
-收集 TMDB 上每一齣劇的演員名稱
-（其實應該也可以用 TMDB API 達成）
+Collect the cast names for each show on TMDB. 
+(This can likely be achieved using the TMDB API.)
 
 #### 03.1-Dcard-parser.Rmd
-取得 Dcard 特定版面的文章列表
+To retrieve a list of articles from a specific section of Dcard.
 
 #### 03.2-Dcard_content_analysis_KRNetflix.Rmd
-取得 Dcard 特定文章的內容全文與基本資訊（留言數、按讚數等）
+To collect the full text and basic information (such as the number of comments and likes) of a specific article from Dcard.
 
 ### 資料分析與視覺化
 #### combinedfinal_twkr.Rmd
-初步資料視覺化的檔案
+Preliminary data visualization file.
+
 
 #### Netflix_countries.Rmd
-美化圖片使用
+For enhancing images.
 
 
 
-## 報告簡報
 
-報導：https://alan000322.github.io/KoreaDrama-TaiwanNetflixAnalysis/
+
+## Presentation
+
+Final：https://alan000322.github.io/KoreaDrama-TaiwanNetflixAnalysis/
 
 報題：
 [期中報題連結](https://docs.google.com/presentation/d/1YSgPmqzaFSmbVI4q67f7RHvS85JjXmjs/edit?usp=sharing&ouid=106392091722319456192&rtpof=true&sd=true)
@@ -45,13 +48,13 @@
 
 
 
-## NOTION 進度整理
+## Notion Backup
 
-[Notion 整理](https://petalite-justice-4cb.notion.site/Final-Netflix-ca70a86d209a462395ab25c143d823fa)
+[Notion Backup](https://petalite-justice-4cb.notion.site/Final-Netflix-ca70a86d209a462395ab25c143d823fa)
 
 
 
-## 參考資料
+## Reference
 [Netflix 紅什麼？從排名數據帶你一次看清楚](https://medium.com/dd-story-hub/netflix-%E7%B4%85%E4%BB%80%E9%BA%BC-%E5%BE%9E%E6%8E%92%E5%90%8D%E6%95%B8%E6%93%9A%E5%B8%B6%E4%BD%A0%E4%B8%80%E6%AC%A1%E7%9C%8B%E6%B8%85%E6%A5%9A-fbdcff623b5e)
 
 [Netflix 排行榜揭密：韓劇爆發、日劇起飛，臺劇新出路在哪裡？](https://www.readr.tw/post/2893)
